@@ -2,6 +2,7 @@
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { CubeIcon, ChartBarIcon, BuildingOfficeIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, PowerIcon } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -35,7 +36,7 @@ async function handleLogout() {
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <div class="sidebar-logo-icon">📦</div>
+        <div class="sidebar-logo-icon"><CubeIcon class="w-6 h-6 text-white" style="width:20px;height:20px;" /></div>
         <div>
           <div class="sidebar-logo-text">StockManager</div>
           <div class="sidebar-logo-sub">MVP v1.0</div>
@@ -46,22 +47,22 @@ async function handleLogout() {
         <div class="sidebar-label">Menu</div>
 
         <RouterLink to="/dashboard" class="nav-link" :class="{ active: route.name === 'dashboard' }">
-          <span class="nav-icon">📊</span> Dashboard
+          <ChartBarIcon class="nav-icon" style="width:18px;height:18px;" /> Dashboard
         </RouterLink>
         <RouterLink to="/products" class="nav-link" :class="{ active: route.name === 'products' }">
-          <span class="nav-icon">📦</span> Produits
+          <CubeIcon class="nav-icon" style="width:18px;height:18px;" /> Produits
         </RouterLink>
         <RouterLink to="/suppliers" class="nav-link" :class="{ active: route.name === 'suppliers' }">
-          <span class="nav-icon">🏭</span> Fournisseurs
+          <BuildingOfficeIcon class="nav-icon" style="width:18px;height:18px;" /> Fournisseurs
         </RouterLink>
 
         <div class="sidebar-label">Mouvements</div>
 
         <RouterLink to="/purchases" class="nav-link" :class="{ active: route.name === 'purchases' }">
-          <span class="nav-icon">⬇️</span> Achats
+          <ArrowDownTrayIcon class="nav-icon" style="width:18px;height:18px;" /> Achats
         </RouterLink>
         <RouterLink to="/sales" class="nav-link" :class="{ active: route.name === 'sales' }">
-          <span class="nav-icon">⬆️</span> Ventes
+          <ArrowUpTrayIcon class="nav-icon" style="width:18px;height:18px;" /> Ventes
         </RouterLink>
       </nav>
 
@@ -72,7 +73,9 @@ async function handleLogout() {
             <div class="sidebar-user-name">{{ auth.user?.name ?? 'Admin' }}</div>
             <div class="sidebar-user-role">Administrateur</div>
           </div>
-          <button class="logout-btn" title="Se déconnecter" @click="handleLogout">⏻</button>
+          <button class="logout-btn" title="Se déconnecter" @click="handleLogout">
+            <PowerIcon style="width:20px;height:20px;" />
+          </button>
         </div>
       </div>
     </aside>

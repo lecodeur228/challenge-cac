@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { CubeIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -31,7 +32,7 @@ async function handleLogin() {
   <div class="auth-page">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="auth-logo-icon">📦</div>
+        <div class="auth-logo-icon"><CubeIcon style="width:32px;height:32px;color:white;" /></div>
         <div style="text-align:center">
           <div class="auth-title">StockManager</div>
           <div class="auth-sub">Connectez-vous à votre espace</div>
@@ -40,7 +41,7 @@ async function handleLogin() {
 
       <form @submit.prevent="handleLogin" style="display:flex;flex-direction:column;gap:16px">
         <div v-if="error" class="alert alert-danger">
-          <span>⚠️</span> {{ error }}
+          <ExclamationTriangleIcon style="width:18px;height:18px;flex-shrink:0" /> {{ error }}
         </div>
 
         <div class="form-group">

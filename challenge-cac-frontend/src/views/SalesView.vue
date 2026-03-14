@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import api from '@/api/axios'
+import { ShoppingCartIcon, ExclamationTriangleIcon, TrashIcon, ArrowUpTrayIcon, CheckIcon, NoSymbolIcon } from '@heroicons/vue/24/outline'
 
 interface Product { id: number; name: string; sku: string; selling_price: string; stock_quantity: number }
 interface Sale { id: number; sale_date: string; total_amount: string; items: any[] }
@@ -95,11 +96,13 @@ function stockAvailable(pid: number | null) {
   <!-- New Sale Form -->
   <div v-if="showForm" class="card" style="margin-bottom:24px">
     <div class="card-header">
-      <div class="card-title">🛒 Nouvelle vente</div>
+      <div class="card-title" style="display:flex;align-items:center;gap:6px;"><ShoppingCartIcon style="width:20px;height:20px" /> Nouvelle vente</div>
       <button class="btn btn-ghost btn-sm" @click="showForm = false">✕ Annuler</button>
     </div>
     <div class="card-body">
-      <div v-if="formError" class="alert alert-danger" style="margin-bottom:16px"><span>⚠️</span> {{ formError }}</div>
+      <div v-if="formError" class="alert alert-danger" style="margin-bottom:16px;display:flex;align-items:center;gap:6px;">
+        <ExclamationTriangleIcon style="width:18px;height:18px;flex-shrink:0" /> {{ formError }}
+      </div>
 
       <div class="form-group" style="max-width:280px;margin-bottom:16px">
         <label>Date de vente *</label>
@@ -115,7 +118,7 @@ function stockAvailable(pid: number | null) {
               <select v-model="item.product_id" @change="onProductChange(i)" :id="'sale-product-'+i">
                 <option :value="null" disabled>— Produit —</option>
                 <option v-for="p in products" :key="p.id" :value="p.id" :disabled="p.stock_quantity <= 0">
-                  {{ p.name }} (stock: {{ p.stock_quantity }}){{ p.stock_quantity <= 0 ? ' ⛔' : '' }}
+                  {{ p.name }} (stock: {{ p.stock_quantity }}){{ p.stock_quantity <= 0 ? ' (Rupture)' : '' }}
                 </option>
               </select>
             </div>
@@ -125,12 +128,18 @@ function stockAvailable(pid: number | null) {
             <div class="form-group" style="margin:0">
               <input type="number" v-model="item.unit_price" min="0" step="0.01" placeholder="Prix unit." :id="'sale-price-'+i" />
             </div>
-            <button class="btn btn-danger btn-sm" @click="removeItem(i)" :disabled="form.items.length === 1">🗑️</button>
+            <button class="btn btn-danger btn-sm" @click="removeItem(i)" :disabled="form.items.length === 1" title="Supprimer l'article">
+              <TrashIcon style="width:16px;height:16px" />
+            </button>
           </div>
           <!-- Stock warning -->
           <div v-if="item.product_id" style="font-size:11px;color:var(--text-muted);margin-top:4px;padding:0 2px">
-            <span v-if="stockAvailable(item.product_id)! <= 0" style="color:var(--danger)">⛔ Rupture de stock</span>
-            <span v-else-if="item.quantity > (stockAvailable(item.product_id) ?? 0)" style="color:var(--danger)">⚠️ Quantité supérieure au stock disponible ({{ stockAvailable(item.product_id) }})</span>
+            <span v-if="stockAvailable(item.product_id)! <= 0" style="color:var(--danger);display:flex;align-items:center;gap:4px;">
+              <NoSymbolIcon style="width:14px;height:14px" /> Rupture de stock
+            </span>
+            <span v-else-if="item.quantity > (stockAvailable(item.product_id) ?? 0)" style="color:var(--danger);display:flex;align-items:center;gap:4px;">
+              <ExclamationTriangleIcon style="width:14px;height:14px" /> Quantité supérieure au stock disponible ({{ stockAvailable(item.product_id) }})
+            </span>
             <span v-else style="color:var(--text-muted)">Stock disponible : {{ stockAvailable(item.product_id) }}</span>
           </div>
         </div>
@@ -145,9 +154,10 @@ function stockAvailable(pid: number | null) {
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" @click="showForm = false">Annuler</button>
-      <button class="btn btn-success" @click="saveSale" :disabled="saving" id="btn-save-sale">
+      <button class="btn btn-success" @click="saveSale" :disabled="saving" id="btn-save-sale" style="display:flex;align-items:center;gap:6px;">
         <span v-if="saving" class="spinner" style="width:14px;height:14px"></span>
-        {{ saving ? 'Enregistrement…' : '✓ Valider la vente' }}
+        <CheckIcon v-if="!saving" style="width:16px;height:16px" />
+        {{ saving ? 'Enregistrement…' : 'Valider la vente' }}
       </button>
     </div>
   </div>
@@ -156,7 +166,7 @@ function stockAvailable(pid: number | null) {
   <div class="card">
     <div v-if="loading" class="loading-center"><div class="spinner"></div> Chargement…</div>
     <div v-else-if="!sales.length" class="empty-state">
-      <div class="empty-state-icon">⬆️</div>
+      <div class="empty-state-icon"><ArrowUpTrayIcon style="width:32px;height:32px;margin:auto" /></div>
       <div class="empty-state-title">Aucune vente enregistrée</div>
     </div>
     <div v-else class="table-container" style="border:none">

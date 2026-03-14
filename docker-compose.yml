@@ -5,7 +5,7 @@ services:
   challenge-cac-backend:
     container_name: challenge-cac-backend
     build:
-      context: ./backend
+      context: ./challenge-cac-backend
       dockerfile: Dockerfile
     ports:
       - "4099:8000"
@@ -13,13 +13,15 @@ services:
       APP_ENV: production
       APP_DEBUG: false
       APP_URL: http://localhost:4099
+      FRONTEND_URL: http://localhost:4000
+      SANCTUM_STATEFUL_DOMAINS: localhost:4000
 
       DB_CONNECTION: sqlite
       DB_DATABASE: /var/www/database/database.sqlite
 
     volumes:
-      - ./backend:/var/www
-      - /var/app/logs/challenge-cac-backend:/var/www/storage/logs
+      - ./challenge-cac-backend:/var/www
+      - ./logs/backend:/var/www/storage/logs
 
     networks:
       - challenge-cac-net
@@ -30,12 +32,15 @@ services:
   challenge-cac-frontend:
     container_name: challenge-cac-frontend
     build:
-      context: ./frontend
+      context: ./challenge-cac-frontend
       dockerfile: Dockerfile
     ports:
       - "4000:5173"
+    environment:
+      VITE_API_URL: http://localhost:4099/api
     volumes:
-      - ./frontend:/app
+      - ./challenge-cac-frontend:/app
+      - /app/node_modules
     networks:
       - challenge-cac-net
 

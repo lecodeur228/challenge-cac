@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/api/axios'
+import { BuildingOfficeIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 interface Supplier { id: number; name: string; phone: string; email: string; address: string }
 
@@ -83,12 +84,14 @@ async function deleteSupplier() {
     <button class="btn btn-primary" @click="openCreate" id="btn-add-supplier">+ Ajouter un fournisseur</button>
   </div>
 
-  <div v-if="error" class="alert alert-danger" style="margin-bottom:16px"><span>⚠️</span> {{ error }}</div>
+  <div v-if="error" class="alert alert-danger" style="margin-bottom:16px;display:flex;align-items:center;gap:6px;">
+    <ExclamationTriangleIcon style="width:18px;height:18px;flex-shrink:0" /> {{ error }}
+  </div>
 
   <div class="card">
     <div v-if="loading" class="loading-center"><div class="spinner"></div> Chargement…</div>
     <div v-else-if="!suppliers.length" class="empty-state">
-      <div class="empty-state-icon">🏭</div>
+      <div class="empty-state-icon"><BuildingOfficeIcon style="width:32px;height:32px;margin:auto" /></div>
       <div class="empty-state-title">Aucun fournisseur</div>
       <div class="empty-state-desc">Ajoutez votre premier fournisseur.</div>
     </div>
@@ -106,8 +109,12 @@ async function deleteSupplier() {
             <td>{{ s.address || '—' }}</td>
             <td>
               <div style="display:flex;gap:6px">
-                <button class="btn btn-secondary btn-sm" @click="openEdit(s)">✏️ Éditer</button>
-                <button class="btn btn-danger btn-sm" @click="deleteConfirm = s">🗑️</button>
+                <button class="btn btn-secondary btn-sm" @click="openEdit(s)" style="display:flex;align-items:center;gap:4px;">
+                  <PencilSquareIcon style="width:14px;height:14px" /> Éditer
+                </button>
+                <button class="btn btn-danger btn-sm" @click="deleteConfirm = s" title="Supprimer">
+                  <TrashIcon style="width:16px;height:16px" />
+                </button>
               </div>
             </td>
           </tr>
@@ -121,7 +128,10 @@ async function deleteSupplier() {
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal">
         <div class="modal-header">
-          <div class="modal-title">{{ editMode ? '✏️ Modifier' : '+ Nouveau fournisseur' }}</div>
+          <div class="modal-title" style="display:flex;align-items:center;gap:6px;">
+            <PencilSquareIcon v-if="editMode" style="width:20px;height:20px" />
+            {{ editMode ? 'Modifier' : '+ Nouveau fournisseur' }}
+          </div>
           <button class="modal-close" @click="showModal = false">×</button>
         </div>
         <div class="modal-body">
@@ -161,7 +171,9 @@ async function deleteSupplier() {
     <div v-if="deleteConfirm" class="modal-overlay" @click.self="deleteConfirm = null">
       <div class="modal" style="max-width:400px">
         <div class="modal-header">
-          <div class="modal-title">🗑️ Supprimer le fournisseur</div>
+          <div class="modal-title" style="display:flex;align-items:center;gap:6px;color:var(--danger)">
+            <TrashIcon style="width:20px;height:20px" /> Supprimer le fournisseur
+          </div>
           <button class="modal-close" @click="deleteConfirm = null">×</button>
         </div>
         <div class="modal-body">

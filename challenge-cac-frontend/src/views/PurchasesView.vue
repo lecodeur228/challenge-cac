@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import api from '@/api/axios'
+import { ClipboardDocumentListIcon, ExclamationTriangleIcon, TrashIcon, ArrowDownTrayIcon, CheckIcon } from '@heroicons/vue/24/outline'
 
 interface Product { id: number; name: string; sku: string; selling_price: string; stock_quantity: number }
 interface Supplier { id: number; name: string }
@@ -92,11 +93,13 @@ function fmtDate(d: string) {
   <!-- New Purchase Form -->
   <div v-if="showForm" class="card" style="margin-bottom:24px">
     <div class="card-header">
-      <div class="card-title">📋 Nouvelle commande d'achat</div>
+      <div class="card-title" style="display:flex;align-items:center;gap:6px;"><ClipboardDocumentListIcon style="width:20px;height:20px" /> Nouvelle commande d'achat</div>
       <button class="btn btn-ghost btn-sm" @click="showForm = false">✕ Annuler</button>
     </div>
     <div class="card-body">
-      <div v-if="formError" class="alert alert-danger" style="margin-bottom:16px"><span>⚠️</span> {{ formError }}</div>
+      <div v-if="formError" class="alert alert-danger" style="margin-bottom:16px;display:flex;align-items:center;gap:6px;">
+        <ExclamationTriangleIcon style="width:18px;height:18px;flex-shrink:0" /> {{ formError }}
+      </div>
 
       <div class="form-row" style="margin-bottom:16px">
         <div class="form-group">
@@ -128,7 +131,9 @@ function fmtDate(d: string) {
           <div class="form-group" style="margin:0">
             <input type="number" v-model="item.unit_price" min="0" step="0.01" placeholder="Prix unit." :id="'purchase-price-'+i" />
           </div>
-          <button class="btn btn-danger btn-sm" @click="removeItem(i)" :disabled="form.items.length === 1">🗑️</button>
+          <button class="btn btn-danger btn-sm" @click="removeItem(i)" :disabled="form.items.length === 1" title="Supprimer l'article">
+            <TrashIcon style="width:16px;height:16px" />
+          </button>
         </div>
         <button class="btn btn-secondary btn-sm" @click="addItem" id="btn-add-item">+ Ajouter un article</button>
       </div>
@@ -140,9 +145,10 @@ function fmtDate(d: string) {
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" @click="showForm = false">Annuler</button>
-      <button class="btn btn-primary" @click="savePurchase" :disabled="saving" id="btn-save-purchase">
+      <button class="btn btn-primary" @click="savePurchase" :disabled="saving" id="btn-save-purchase" style="display:flex;align-items:center;gap:6px;">
         <span v-if="saving" class="spinner" style="width:14px;height:14px"></span>
-        {{ saving ? 'Enregistrement…' : '✓ Valider la commande' }}
+        <CheckIcon v-if="!saving" style="width:16px;height:16px" />
+        {{ saving ? 'Enregistrement…' : 'Valider la commande' }}
       </button>
     </div>
   </div>
@@ -151,7 +157,7 @@ function fmtDate(d: string) {
   <div class="card">
     <div v-if="loading" class="loading-center"><div class="spinner"></div> Chargement…</div>
     <div v-else-if="!purchases.length" class="empty-state">
-      <div class="empty-state-icon">⬇️</div>
+      <div class="empty-state-icon"><ArrowDownTrayIcon style="width:32px;height:32px;margin:auto" /></div>
       <div class="empty-state-title">Aucun achat enregistré</div>
     </div>
     <div v-else class="table-container" style="border:none">

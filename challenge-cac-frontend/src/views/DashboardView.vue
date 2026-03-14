@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/api/axios'
+import {
+  CubeIcon, ExclamationCircleIcon, ExclamationTriangleIcon,
+  BanknotesIcon, ShoppingCartIcon, BuildingOfficeIcon, CheckCircleIcon
+} from '@heroicons/vue/24/outline'
 
 interface DashStats {
   total_products: number
@@ -49,7 +53,7 @@ function stockBadge(p: any) {
     <!-- Stat Cards -->
     <div class="stat-grid">
       <div class="stat-card" style="--stat-color: #6366f1; --stat-bg: rgba(99,102,241,0.15)">
-        <div class="stat-icon">📦</div>
+        <div class="stat-icon"><CubeIcon style="width:24px;height:24px" /></div>
         <div class="stat-info">
           <div class="stat-label">Total Produits</div>
           <div class="stat-value">{{ stats.total_products }}</div>
@@ -57,7 +61,7 @@ function stockBadge(p: any) {
         </div>
       </div>
       <div class="stat-card" style="--stat-color: #ef4444; --stat-bg: rgba(239,68,68,0.15)">
-        <div class="stat-icon">🚫</div>
+        <div class="stat-icon"><ExclamationCircleIcon style="width:24px;height:24px" /></div>
         <div class="stat-info">
           <div class="stat-label">En rupture</div>
           <div class="stat-value">{{ stats.out_of_stock }}</div>
@@ -65,7 +69,7 @@ function stockBadge(p: any) {
         </div>
       </div>
       <div class="stat-card" style="--stat-color: #f59e0b; --stat-bg: rgba(245,158,11,0.15)">
-        <div class="stat-icon">⚠️</div>
+        <div class="stat-icon"><ExclamationTriangleIcon style="width:24px;height:24px" /></div>
         <div class="stat-info">
           <div class="stat-label">Stock faible</div>
           <div class="stat-value">{{ stats.low_stock }}</div>
@@ -73,7 +77,7 @@ function stockBadge(p: any) {
         </div>
       </div>
       <div class="stat-card" style="--stat-color: #22c55e; --stat-bg: rgba(34,197,94,0.15)">
-        <div class="stat-icon">💰</div>
+        <div class="stat-icon"><BanknotesIcon style="width:24px;height:24px" /></div>
         <div class="stat-info">
           <div class="stat-label">Ventes du mois</div>
           <div class="stat-value" style="font-size:20px">{{ fmtMoney(stats.month_sales_total) }}</div>
@@ -91,7 +95,7 @@ function stockBadge(p: any) {
           <RouterLink to="/sales" class="btn btn-ghost btn-sm">Voir tout →</RouterLink>
         </div>
         <div v-if="!stats.recent_sales.length" class="empty-state" style="padding:30px">
-          <div class="empty-state-icon">🛒</div>
+          <div class="empty-state-icon"><ShoppingCartIcon style="width:32px;height:32px;margin:auto" /></div>
           <div class="empty-state-title">Aucune vente</div>
         </div>
         <div class="table-container" v-else style="border:none;border-radius:0">
@@ -118,7 +122,7 @@ function stockBadge(p: any) {
           <RouterLink to="/purchases" class="btn btn-ghost btn-sm">Voir tout →</RouterLink>
         </div>
         <div v-if="!stats.recent_purchases.length" class="empty-state" style="padding:30px">
-          <div class="empty-state-icon">🏭</div>
+          <div class="empty-state-icon"><BuildingOfficeIcon style="width:32px;height:32px;margin:auto" /></div>
           <div class="empty-state-title">Aucun achat</div>
         </div>
         <div class="table-container" v-else style="border:none;border-radius:0">
@@ -141,11 +145,13 @@ function stockBadge(p: any) {
       <!-- Low Stock Products -->
       <div class="card" style="grid-column: 1 / -1">
         <div class="card-header">
-          <div class="card-title">⚠️ Produits en alerte stock</div>
+          <div class="card-title" style="display:flex;align-items:center;gap:6px">
+            <ExclamationTriangleIcon style="width:20px;height:20px;color:var(--warning)" /> Produits en alerte stock
+          </div>
           <RouterLink to="/products" class="btn btn-ghost btn-sm">Gérer →</RouterLink>
         </div>
         <div v-if="!stats.low_stock_products.length" class="empty-state" style="padding:30px">
-          <div class="empty-state-icon">✅</div>
+          <div class="empty-state-icon"><CheckCircleIcon style="width:32px;height:32px;margin:auto;color:var(--success)" /></div>
           <div class="empty-state-title">Tous les produits ont un stock suffisant !</div>
         </div>
         <div class="table-container" v-else style="border:none;border-radius:0">

@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, markRaw } from 'vue'
 import api from '@/api/axios'
+import {
+  CubeIcon, MagnifyingGlassIcon, ExclamationTriangleIcon,
+  ExclamationCircleIcon, CheckCircleIcon, PencilSquareIcon, TrashIcon
+} from '@heroicons/vue/24/outline'
 
 interface Product {
   id: number
@@ -115,9 +119,9 @@ function fmtMoney(v: string | number) {
 }
 
 function stockBadge(s: string) {
-  if (s === 'out_of_stock') return { cls: 'badge-danger', label: '🚫 Rupture' }
-  if (s === 'low_stock')   return { cls: 'badge-warning', label: '⚠️ Faible' }
-  return { cls: 'badge-success', label: '✅ Normal' }
+  if (s === 'out_of_stock') return { cls: 'badge-danger', label: 'Rupture', icon: markRaw(ExclamationCircleIcon) }
+  if (s === 'low_stock')   return { cls: 'badge-warning', label: 'Faible', icon: markRaw(ExclamationTriangleIcon) }
+  return { cls: 'badge-success', label: 'Normal', icon: markRaw(CheckCircleIcon) }
 }
 </script>
 
@@ -135,22 +139,22 @@ function stockBadge(s: string) {
   <div class="card" style="margin-bottom:20px">
     <div class="card-body" style="padding:16px">
       <div class="search-bar">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><MagnifyingGlassIcon style="width:20px;height:20px" /></span>
         <input v-model="search" placeholder="Rechercher par nom ou référence…" id="product-search" />
       </div>
     </div>
   </div>
 
   <!-- Error -->
-  <div v-if="error" class="alert alert-danger" style="margin-bottom:16px">
-    <span>⚠️</span> {{ error }}
+  <div v-if="error" class="alert alert-danger" style="margin-bottom:16px;display:flex;align-items:center;gap:6px;">
+    <ExclamationTriangleIcon style="width:18px;height:18px;flex-shrink:0" /> {{ error }}
   </div>
 
   <!-- Table -->
   <div class="card">
     <div v-if="loading" class="loading-center"><div class="spinner"></div> Chargement…</div>
     <div v-else-if="!products.length" class="empty-state">
-      <div class="empty-state-icon">📦</div>
+      <div class="empty-state-icon"><CubeIcon style="width:32px;height:32px;margin:auto" /></div>
       <div class="empty-state-title">Aucun produit trouvé</div>
       <div class="empty-state-desc">Ajoutez votre premier produit pour commencer.</div>
     </div>
@@ -174,11 +178,20 @@ function stockBadge(s: string) {
               {{ p.stock_quantity }}
             </td>
             <td>{{ p.minimum_stock }}</td>
-            <td><span class="badge" :class="stockBadge(p.stock_status).cls">{{ stockBadge(p.stock_status).label }}</span></td>
+            <td>
+              <span class="badge" :class="stockBadge(p.stock_status).cls" style="display:inline-flex;align-items:center;gap:4px;">
+                <component :is="stockBadge(p.stock_status).icon" style="width:14px;height:14px;" />
+                {{ stockBadge(p.stock_status).label }}
+              </span>
+            </td>
             <td>
               <div style="display:flex;gap:6px">
-                <button class="btn btn-secondary btn-sm" @click="openEdit(p)">✏️ Éditer</button>
-                <button class="btn btn-danger btn-sm" @click="deleteConfirm = p">🗑️</button>
+                <button class="btn btn-secondary btn-sm" @click="openEdit(p)" style="display:flex;align-items:center;gap:4px;">
+                  <PencilSquareIcon style="width:14px;height:14px" /> Éditer
+                </button>
+                <button class="btn btn-danger btn-sm" @click="deleteConfirm = p" title="Supprimer">
+                  <TrashIcon style="width:16px;height:16px" />
+                </button>
               </div>
             </td>
           </tr>
@@ -192,7 +205,10 @@ function stockBadge(s: string) {
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal">
         <div class="modal-header">
-          <div class="modal-title">{{ editMode ? '✏️ Modifier le produit' : '+ Nouveau produit' }}</div>
+          <div class="modal-title" style="display:flex;align-items:center;gap:6px;">
+            <PencilSquareIcon v-if="editMode" style="width:20px;height:20px" />
+            {{ editMode ? 'Modifier le produit' : '+ Nouveau produit' }}
+          </div>
           <button class="modal-close" @click="showModal = false">×</button>
         </div>
         <div class="modal-body">
@@ -262,7 +278,9 @@ function stockBadge(s: string) {
     <div v-if="deleteConfirm" class="modal-overlay" @click.self="deleteConfirm = null">
       <div class="modal" style="max-width:420px">
         <div class="modal-header">
-          <div class="modal-title">🗑️ Supprimer le produit</div>
+          <div class="modal-title" style="display:flex;align-items:center;gap:6px;color:var(--danger)">
+            <TrashIcon style="width:20px;height:20px" /> Supprimer le produit
+          </div>
           <button class="modal-close" @click="deleteConfirm = null">×</button>
         </div>
         <div class="modal-body">
