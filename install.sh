@@ -23,6 +23,14 @@ fi
 
 cd $REPO_DIR
 
+# Détection de l'IP publique du serveur
+echo "Detecting server IP..."
+SERVER_IP=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
+echo "Server IP: $SERVER_IP"
+
+# Écriture du fichier .env pour docker-compose
+echo "SERVER_IP=$SERVER_IP" > .env
+
 # Création réseau docker si absent
 if ! docker network ls | grep -q "$NETWORK_NAME"; then
   echo "Creating docker network $NETWORK_NAME..."
@@ -50,6 +58,7 @@ chmod -R 775 challenge-cac-backend/bootstrap/cache
 echo "Building and starting containers..."
 docker compose up -d --build
 
-echo "Deployment complete."
-echo "Frontend: http://localhost:4000"
-echo "Backend API: http://localhost:4099/api"
+echo ""
+echo "✔ Deployment complete."
+echo "   Frontend  : http://$SERVER_IP:4000"
+echo "   Backend API: http://$SERVER_IP:4099/api"
