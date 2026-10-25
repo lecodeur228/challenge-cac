@@ -1,87 +1,72 @@
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/server";
+import { Alert, PageHeader } from "@/components/ui";
+import { checkDbHealth } from "@/lib/db-health";
 
 export const instant = false;
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-
-  const [students, courses, enrollments, grades, absences] = await Promise.all([
-    supabase.from("students").select("*", { count: "exact", head: true }),
-    supabase.from("courses").select("*", { count: "exact", head: true }),
-    supabase.from("enrollments").select("*", { count: "exact", head: true }),
-    supabase.from("grades").select("*", { count: "exact", head: true }),
-    supabase.from("absences").select("*", { count: "exact", head: true }),
-  ]);
+  const health = await checkDbHealth();
 
   const stats = [
-    {
-      label: "Étudiants",
-      value: students.count ?? 0,
-      href: "/dashboard/students",
-      error: students.error?.message,
-    },
-    {
-      label: "Cours",
-      value: courses.count ?? 0,
-      href: "/dashboard/courses",
-      error: courses.error?.message,
-    },
-    {
-      label: "Inscriptions",
-      value: enrollments.count ?? 0,
-      href: "/dashboard/enrollments",
-      error: enrollments.error?.message,
-    },
-    {
-      label: "Notes",
-      value: grades.count ?? 0,
-      href: "/dashboard/grades",
-      error: grades.error?.message,
-    },
-    {
-      label: "Absences",
-      value: absences.count ?? 0,
-      href: "/dashboard/absences",
-      error: absences.error?.message,
-    },
-  ];
-
-  const schemaMissing = stats.some(
-    (s) => s.error && /relation|does not exist|schema cache/i.test(s.error),
-  );
+    { label: "Étudiants", href: "/dashboard/students", key: "students" },
+    { label: "Cours", href: "/dashboard/courses", key: "courses" },
+    { label: "Inscriptions", href: "/dashboard/enrollments", key: "enrollments" },
+    { label: "Notes", href: "/dashboard/grades", key: "grades" },
+    { label: "Absences", href: "/dashboard/absences", key: "absences" },
+  ] as const;
 
   return (
-    <div>
-      <h1 className="font-[family-name:var(--font-fraunces)] text-3xl text-stone-900">
-        Vue d&apos;ensemble
-      </h1>
-      <p className="mt-2 text-stone-500">
-        Suivi rapide des étudiants, cours, notes et absences.
-      </p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Accueil"
+        description="Ajoute des étudiants, des cours, puis les inscriptions, notes et absences."
+      />
 
-      {schemaMissing ? (
-        <div className="mt-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          Les tables Supabase ne sont pas encore créées. Exécute le SQL de{" "}
-          <code className="rounded bg-amber-100 px-1">supabase/schema.sql</code>{" "}
-          dans le SQL Editor du projet Supabase, puis recharge cette page.
-        </div>
-      ) : null}
+      <Alert tone={health.ok ? "ok" : health.missingSchema ? "warn" : "error"}>
+        {health.message}
+        {health.missingSchema ? (
+          <>
+            {" "}
+            Lien SQL Editor :{" "}
+            <a
+              className="font-semibold underline"
+              href="https://supabase.com/dashboard/project/mfnvfqkmnqduxjbdomgy/sql/new"
+              target="_blank"
+              rel="noreferrer"
+            >
+              ouvrir Supabase
+            </a>
+            .
+          </>
+        ) : null}
+      </Alert>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat) => (
-          <Link
-            key={stat.href}
-            href={stat.href}
-            className="rounded-lg border border-stone-200 bg-white/80 p-5 transition hover:border-teal-700"
-          >
-            <p className="text-sm text-stone-500">{stat.label}</p>
-            <p className="mt-2 font-[family-name:var(--font-fraunces)] text-4xl text-teal-900">
-              {stat.error && !schemaMissing ? "—" : stat.value}
-            </p>
-          </Link>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => {
+          const value = health.counts[stat.key];
+          return (
+            <Link
+              key={stat.href}
+              href={stat.href}
+              className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-teal-700 hover:shadow"
+            >
+              <p className="text-sm font-medium text-stone-500">{stat.label}</p>
+              <p className="mt-2 font-[family-name:var(--font-fraunces)] text-4xl text-teal-900">
+                {health.ok ? (value ?? 0) : "—"}
+              </p>
+              <p className="mt-3 text-sm font-medium text-teal-800">Ouvrir →</p>
+            </Link>
+          );
+        })}
       </div>
+
+      {health.ok ? (
+        <Alert tone="info">
+          Parcours conseillé : <strong>Étudiants</strong> → <strong>Cours</strong> →{" "}
+          <strong>Inscriptions</strong> → <strong>Notes</strong> /{" "}
+          <strong>Absences</strong>.
+        </Alert>
+      ) : null}
     </div>
   );
 }

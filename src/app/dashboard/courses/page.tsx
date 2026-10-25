@@ -1,6 +1,14 @@
 import { createCourse, deleteCourse } from "@/app/actions/courses";
 import { ActionForm } from "@/components/FormMessage";
 import { SubmitButton } from "@/components/SubmitButton";
+import {
+  Alert,
+  DataTable,
+  EmptyState,
+  Field,
+  PageHeader,
+  Panel,
+} from "@/components/ui";
 import type { Course } from "@/lib/types";
 import { createClient } from "@/utils/supabase/server";
 
@@ -16,80 +24,59 @@ export default async function CoursesPage() {
   const courses = (data ?? []) as Course[];
 
   return (
-    <div>
-      <h1 className="font-[family-name:var(--font-fraunces)] text-3xl text-stone-900">
-        Cours
-      </h1>
-      <p className="mt-2 text-stone-500">Catalogue des cours.</p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Cours"
+        description="Définis les matières (code, titre, crédits)."
+      />
 
-      <ActionForm
-        action={createCourse}
-        className="mt-8 grid gap-3 rounded-lg border border-stone-200 bg-white/80 p-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <input
-          name="code"
-          placeholder="Code (ex: INFO101)"
-          required
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm"
-        />
-        <input
-          name="title"
-          placeholder="Titre"
-          required
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm"
-        />
-        <input
-          name="credits"
-          type="number"
-          min={1}
-          max={30}
-          defaultValue={3}
-          required
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm"
-        />
-        <SubmitButton>Ajouter</SubmitButton>
-      </ActionForm>
+      {error ? <Alert tone="error">{error.message}</Alert> : null}
 
-      {error ? (
-        <p className="mt-4 text-sm text-red-700">{error.message}</p>
-      ) : null}
+      <Panel title="Nouveau cours">
+        <ActionForm
+          action={createCourse}
+          successMessage="Cours ajouté."
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <Field label="Code" name="code" required placeholder="INFO101" />
+          <Field label="Titre" name="title" required placeholder="Algorithmique" />
+          <Field
+            label="Crédits"
+            name="credits"
+            type="number"
+            min={1}
+            max={30}
+            defaultValue={3}
+            required
+          />
+          <div className="flex items-end">
+            <SubmitButton className="w-full">Ajouter le cours</SubmitButton>
+          </div>
+        </ActionForm>
+      </Panel>
 
       {courses.length === 0 && !error ? (
-        <p className="mt-8 text-sm text-stone-500">Aucun cours pour le moment.</p>
-      ) : (
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-[480px] text-left text-sm">
-            <thead className="border-b border-stone-300 text-stone-500">
-              <tr>
-                <th className="py-2 pr-3 font-medium">Code</th>
-                <th className="py-2 pr-3 font-medium">Titre</th>
-                <th className="py-2 pr-3 font-medium">Crédits</th>
-                <th className="py-2 font-medium" />
-              </tr>
-            </thead>
-            <tbody>
-              {courses.map((c) => (
-                <tr key={c.id} className="border-b border-stone-200">
-                  <td className="py-3 pr-3 font-medium">{c.code}</td>
-                  <td className="py-3 pr-3">{c.title}</td>
-                  <td className="py-3 pr-3">{c.credits}</td>
-                  <td className="py-3 text-right">
-                    <ActionForm action={deleteCourse}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <button
-                        type="submit"
-                        className="text-red-700 hover:underline"
-                      >
-                        Supprimer
-                      </button>
-                    </ActionForm>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <EmptyState
+          message="Aucun cours."
+          hint="Ajoute au moins un cours avant les inscriptions."
+        />
+      ) : courses.length > 0 ? (
+        <DataTable headers={["Code", "Titre", "Crédits"]}>
+          {courses.map((c) => (
+            <tr key={c.id} className="hover:bg-stone-50">
+              <td className="px-4 py-3 font-medium">{c.code}</td>
+              <td className="px-4 py-3">{c.title}</td>
+              <td className="px-4 py-3">{c.credits}</td>
+              <td className="px-4 py-3 text-right">
+                <ActionForm action={deleteCourse}>
+                  <input type="hidden" name="id" value={c.id} />
+                  <SubmitButton variant="danger">Supprimer</SubmitButton>
+                </ActionForm>
+              </td>
+            </tr>
+          ))}
+        </DataTable>
+      ) : null}
     </div>
   );
 }

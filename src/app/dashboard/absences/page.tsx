@@ -1,6 +1,15 @@
 import { createAbsence, deleteAbsence } from "@/app/actions/absences";
 import { ActionForm } from "@/components/FormMessage";
 import { SubmitButton } from "@/components/SubmitButton";
+import {
+  Alert,
+  DataTable,
+  EmptyState,
+  Field,
+  PageHeader,
+  Panel,
+  SelectField,
+} from "@/components/ui";
 import type { Absence, Course, Student } from "@/lib/types";
 import { createClient } from "@/utils/supabase/server";
 
@@ -22,109 +31,85 @@ export default async function AbsencesPage() {
   const students = (studentsRes.data ?? []) as Student[];
   const courses = (coursesRes.data ?? []) as Course[];
   const today = new Date().toISOString().slice(0, 10);
+  const canAdd = students.length > 0 && courses.length > 0;
 
   return (
-    <div>
-      <h1 className="font-[family-name:var(--font-fraunces)] text-3xl text-stone-900">
-        Absences
-      </h1>
-      <p className="mt-2 text-stone-500">Enregistrer les absences par cours.</p>
-
-      <ActionForm
-        action={createAbsence}
-        className="mt-8 grid gap-3 rounded-lg border border-stone-200 bg-white/80 p-4 sm:grid-cols-2 lg:grid-cols-5"
-      >
-        <select
-          name="student_id"
-          required
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm"
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Étudiant
-          </option>
-          {students.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.last_name} {s.first_name}
-            </option>
-          ))}
-        </select>
-        <select
-          name="course_id"
-          required
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm"
-          defaultValue=""
-        >
-          <option value="" disabled>
-            Cours
-          </option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.code}
-            </option>
-          ))}
-        </select>
-        <input
-          name="date"
-          type="date"
-          required
-          defaultValue={today}
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm"
-        />
-        <input
-          name="reason"
-          placeholder="Motif (optionnel)"
-          className="rounded-md border border-stone-300 px-3 py-2 text-sm"
-        />
-        <SubmitButton>Ajouter</SubmitButton>
-      </ActionForm>
+    <div className="space-y-6">
+      <PageHeader
+        title="Absences"
+        description="Enregistre une absence pour un étudiant et un cours."
+      />
 
       {absencesRes.error ? (
-        <p className="mt-4 text-sm text-red-700">{absencesRes.error.message}</p>
+        <Alert tone="error">{absencesRes.error.message}</Alert>
       ) : null}
 
+      <Panel title="Nouvelle absence">
+        {!canAdd ? (
+          <Alert tone="warn">Ajoute d&apos;abord un étudiant et un cours.</Alert>
+        ) : (
+          <ActionForm
+            action={createAbsence}
+            successMessage="Absence enregistrée."
+            className="grid gap-4 sm:grid-cols-2"
+          >
+            <SelectField
+              label="Étudiant"
+              name="student_id"
+              required
+              placeholder="Choisir un étudiant"
+              options={students.map((s) => ({
+                value: s.id,
+                label: `${s.last_name} ${s.first_name}`,
+              }))}
+            />
+            <SelectField
+              label="Cours"
+              name="course_id"
+              required
+              placeholder="Choisir un cours"
+              options={courses.map((c) => ({
+                value: c.id,
+                label: `${c.code} — ${c.title}`,
+              }))}
+            />
+            <Field label="Date" name="date" type="date" required defaultValue={today} />
+            <Field
+              label="Motif (optionnel)"
+              name="reason"
+              placeholder="Maladie, retard…"
+            />
+            <div className="sm:col-span-2">
+              <SubmitButton>Enregistrer l&apos;absence</SubmitButton>
+            </div>
+          </ActionForm>
+        )}
+      </Panel>
+
       {absences.length === 0 && !absencesRes.error ? (
-        <p className="mt-8 text-sm text-stone-500">Aucune absence enregistrée.</p>
-      ) : (
-        <div className="mt-8 overflow-x-auto">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="border-b border-stone-300 text-stone-500">
-              <tr>
-                <th className="py-2 pr-3 font-medium">Date</th>
-                <th className="py-2 pr-3 font-medium">Étudiant</th>
-                <th className="py-2 pr-3 font-medium">Cours</th>
-                <th className="py-2 pr-3 font-medium">Motif</th>
-                <th className="py-2 font-medium" />
-              </tr>
-            </thead>
-            <tbody>
-              {absences.map((a) => (
-                <tr key={a.id} className="border-b border-stone-200">
-                  <td className="py-3 pr-3">{a.date}</td>
-                  <td className="py-3 pr-3">
-                    {a.students
-                      ? `${a.students.last_name} ${a.students.first_name}`
-                      : "—"}
-                  </td>
-                  <td className="py-3 pr-3">{a.courses?.code ?? "—"}</td>
-                  <td className="py-3 pr-3">{a.reason || "—"}</td>
-                  <td className="py-3 text-right">
-                    <ActionForm action={deleteAbsence}>
-                      <input type="hidden" name="id" value={a.id} />
-                      <button
-                        type="submit"
-                        className="text-red-700 hover:underline"
-                      >
-                        Supprimer
-                      </button>
-                    </ActionForm>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <EmptyState message="Aucune absence." />
+      ) : absences.length > 0 ? (
+        <DataTable headers={["Date", "Étudiant", "Cours", "Motif"]}>
+          {absences.map((a) => (
+            <tr key={a.id} className="hover:bg-stone-50">
+              <td className="px-4 py-3 font-medium">{a.date}</td>
+              <td className="px-4 py-3">
+                {a.students
+                  ? `${a.students.last_name} ${a.students.first_name}`
+                  : "—"}
+              </td>
+              <td className="px-4 py-3">{a.courses?.code ?? "—"}</td>
+              <td className="px-4 py-3 text-stone-600">{a.reason || "—"}</td>
+              <td className="px-4 py-3 text-right">
+                <ActionForm action={deleteAbsence}>
+                  <input type="hidden" name="id" value={a.id} />
+                  <SubmitButton variant="danger">Supprimer</SubmitButton>
+                </ActionForm>
+              </td>
+            </tr>
+          ))}
+        </DataTable>
+      ) : null}
     </div>
   );
 }
