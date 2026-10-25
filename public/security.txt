@@ -1,0 +1,4 @@
+# Security contact & authorized testing
+Contact: see SECURITY.md on the GitHub repository
+Policy: https://github.com/lecodeur228/challenge-cac/blob/main/SECURITY.md
+Preferred-Languages: fr, en

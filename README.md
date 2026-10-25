@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Studia — Gestion des étudiants
 
-## Getting Started
+Application web de gestion scolaire : étudiants, cours, inscriptions, notes et absences.
 
-First, run the development server:
+**Stack :** Next.js 16 · Supabase (Auth + Postgres + RLS) · Vercel  
+**Live :** https://challenge-cac.vercel.app
+
+## Fonctionnalités
+
+- Authentification admin (email / mot de passe)
+- Inscription protégée par **code d’invitation**
+- CRUD : étudiants, cours, inscriptions, notes, absences
+- Dashboard avec compteurs
+- Sécurité : RLS Supabase, validation Zod, headers HTTP, sessions via `getUser()`
+
+## Démarrage local
 
 ```bash
+npm install
+cp .env.example .env.local
+# renseigner SUPABASE + SIGNUP_INVITE_CODE
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvre http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Variables d’environnement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clé publishable (anon) |
+| `SIGNUP_INVITE_CODE` | Secret requis pour `/signup` |
 
-## Learn More
+### Base de données
 
-To learn more about Next.js, take a look at the following resources:
+Exécuter une fois [`supabase/schema.sql`](supabase/schema.sql) dans le SQL Editor Supabase.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Dans **Authentication → Providers → Email** : désactiver *Confirm email* pour les tests.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+```bash
+npm run dev      # développement
+npm run build    # build production
+npm run test     # tests unitaires (Vitest)
+npm run lint     # ESLint
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Sécurité & pentest
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Voir **[SECURITY.md](SECURITY.md)** : périmètre, accès autorisé, modèle de menaces, surface d’attaque, format de rapport.
+
+Fichiers publics : [`/.well-known/security.txt`](public/.well-known/security.txt)
+
+## Architecture
+
+```
+src/
+  app/actions/     # Server Actions (auth + CRUD)
+  app/dashboard/   # UI admin
+  lib/validation.ts
+  utils/supabase/  # clients SSR / browser / middleware
+supabase/schema.sql
+```
+
+## Déploiement
+
+Déployé sur Vercel. Les variables `NEXT_PUBLIC_SUPABASE_*` et `SIGNUP_INVITE_CODE` doivent être définies dans le projet Vercel.
+
+```bash
+vercel --prod
+```
+
+## Licence
+
+Projet challenge / démonstration — usage éducatif.
