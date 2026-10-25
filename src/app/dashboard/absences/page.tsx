@@ -1,5 +1,6 @@
 import { createAbsence, deleteAbsence } from "@/app/actions/absences";
 import { ActionForm } from "@/components/FormMessage";
+import { SchemaSetup } from "@/components/SchemaSetup";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
   Alert,
@@ -10,14 +11,24 @@ import {
   Panel,
   SelectField,
 } from "@/components/ui";
+import { checkDbHealth } from "@/lib/db-health";
 import type { Absence, Course, Student } from "@/lib/types";
 import { createClient } from "@/utils/supabase/server";
 
 export const instant = false;
 
 export default async function AbsencesPage() {
-  const supabase = await createClient();
+  const health = await checkDbHealth();
+  if (health.missingSchema) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Absences" description="Installation requise." />
+        <SchemaSetup />
+      </div>
+    );
+  }
 
+  const supabase = await createClient();
   const [absencesRes, studentsRes, coursesRes] = await Promise.all([
     supabase
       .from("absences")
@@ -26,6 +37,19 @@ export default async function AbsencesPage() {
     supabase.from("students").select("*").order("last_name"),
     supabase.from("courses").select("*").order("code"),
   ]);
+
+  if (absencesRes.error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Absences" description="Erreur." />
+        <Alert tone="error">
+          Impossible de charger les absences. Vérifie l&apos;installation
+          Supabase.
+        </Alert>
+        <SchemaSetup compact />
+      </div>
+    );
+  }
 
   const absences = (absencesRes.data ?? []) as Absence[];
   const students = (studentsRes.data ?? []) as Student[];
@@ -39,10 +63,6 @@ export default async function AbsencesPage() {
         title="Absences"
         description="Enregistre une absence pour un étudiant et un cours."
       />
-
-      {absencesRes.error ? (
-        <Alert tone="error">{absencesRes.error.message}</Alert>
-      ) : null}
 
       <Panel title="Nouvelle absence">
         {!canAdd ? (
@@ -73,7 +93,13 @@ export default async function AbsencesPage() {
                 label: `${c.code} — ${c.title}`,
               }))}
             />
-            <Field label="Date" name="date" type="date" required defaultValue={today} />
+            <Field
+              label="Date"
+              name="date"
+              type="date"
+              required
+              defaultValue={today}
+            />
             <Field
               label="Motif (optionnel)"
               name="reason"
@@ -86,9 +112,9 @@ export default async function AbsencesPage() {
         )}
       </Panel>
 
-      {absences.length === 0 && !absencesRes.error ? (
+      {absences.length === 0 ? (
         <EmptyState message="Aucune absence." />
-      ) : absences.length > 0 ? (
+      ) : (
         <DataTable headers={["Date", "Étudiant", "Cours", "Motif"]}>
           {absences.map((a) => (
             <tr key={a.id} className="hover:bg-stone-50">
@@ -109,7 +135,7 @@ export default async function AbsencesPage() {
             </tr>
           ))}
         </DataTable>
-      ) : null}
+      )}
     </div>
   );
 }

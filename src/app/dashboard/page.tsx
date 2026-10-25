@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SchemaSetup } from "@/components/SchemaSetup";
 import { SeedButton } from "@/components/SeedButton";
 import { Alert, PageHeader, Panel } from "@/components/ui";
 import { checkDbHealth } from "@/lib/db-health";
@@ -19,6 +20,18 @@ export default async function DashboardPage() {
     { label: "Absences", href: "/dashboard/absences", key: "absences" },
   ] as const;
 
+  if (health.missingSchema) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Accueil"
+          description="Avant d’utiliser Studia, installe les tables Supabase."
+        />
+        <SchemaSetup />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -26,32 +39,12 @@ export default async function DashboardPage() {
         description="Ajoute des étudiants, des cours, puis les inscriptions, notes et absences."
       />
 
-      <Alert tone={health.ok ? "ok" : health.missingSchema ? "warn" : "error"}>
-        {health.message}
-        {health.missingSchema ? (
-          <>
-            {" "}
-            Exécute{" "}
-            <code className="rounded bg-black/5 px-1">supabase/setup-all.sql</code>{" "}
-            dans le{" "}
-            <a
-              className="font-semibold underline"
-              href="https://supabase.com/dashboard/project/mfnvfqkmnqduxjbdomgy/sql/new"
-              target="_blank"
-              rel="noreferrer"
-            >
-              SQL Editor Supabase
-            </a>{" "}
-            (schéma + seed en une fois).
-          </>
-        ) : null}
-      </Alert>
+      <Alert tone={health.ok ? "ok" : "error"}>{health.message}</Alert>
 
       {empty ? (
-        <Panel title="Données de démo (prod / local)">
+        <Panel title="Données de démo">
           <p className="mb-3 text-sm text-stone-600">
-            Base vide. Charge un jeu de test (4 étudiants, 4 cours, notes,
-            absences) pour le pentest et les démos.
+            Base vide. Charge un jeu de test pour le pentest et les démos.
           </p>
           <SeedButton />
         </Panel>
@@ -75,14 +68,6 @@ export default async function DashboardPage() {
           );
         })}
       </div>
-
-      {health.ok ? (
-        <Alert tone="info">
-          Parcours conseillé : <strong>Étudiants</strong> → <strong>Cours</strong> →{" "}
-          <strong>Inscriptions</strong> → <strong>Notes</strong> /{" "}
-          <strong>Absences</strong>.
-        </Alert>
-      ) : null}
     </div>
   );
 }

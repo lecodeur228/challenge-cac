@@ -1,5 +1,6 @@
 import { createCourse, deleteCourse } from "@/app/actions/courses";
 import { ActionForm } from "@/components/FormMessage";
+import { SchemaSetup } from "@/components/SchemaSetup";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
   Alert,
@@ -9,19 +10,35 @@ import {
   PageHeader,
   Panel,
 } from "@/components/ui";
+import { loadTable } from "@/lib/db";
 import type { Course } from "@/lib/types";
-import { createClient } from "@/utils/supabase/server";
 
 export const instant = false;
 
 export default async function CoursesPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("code");
+  const result = await loadTable<Course>("courses", (supabase) =>
+    supabase.from("courses").select("*").order("code"),
+  );
 
-  const courses = (data ?? []) as Course[];
+  if (!result.ok && result.missingSchema) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Cours" description="Installation requise." />
+        <SchemaSetup />
+      </div>
+    );
+  }
+
+  if (!result.ok) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Cours" description="Erreur de chargement." />
+        <Alert tone="error">{result.error}</Alert>
+      </div>
+    );
+  }
+
+  const courses = result.rows;
 
   return (
     <div className="space-y-6">
@@ -29,8 +46,6 @@ export default async function CoursesPage() {
         title="Cours"
         description="Définis les matières (code, titre, crédits)."
       />
-
-      {error ? <Alert tone="error">{error.message}</Alert> : null}
 
       <Panel title="Nouveau cours">
         <ActionForm
@@ -55,12 +70,12 @@ export default async function CoursesPage() {
         </ActionForm>
       </Panel>
 
-      {courses.length === 0 && !error ? (
+      {courses.length === 0 ? (
         <EmptyState
           message="Aucun cours."
           hint="Ajoute au moins un cours avant les inscriptions."
         />
-      ) : courses.length > 0 ? (
+      ) : (
         <DataTable headers={["Code", "Titre", "Crédits"]}>
           {courses.map((c) => (
             <tr key={c.id} className="hover:bg-stone-50">
@@ -76,7 +91,7 @@ export default async function CoursesPage() {
             </tr>
           ))}
         </DataTable>
-      ) : null}
+      )}
     </div>
   );
 }

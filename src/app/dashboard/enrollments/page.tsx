@@ -1,5 +1,6 @@
 import { createEnrollment, deleteEnrollment } from "@/app/actions/enrollments";
 import { ActionForm } from "@/components/FormMessage";
+import { SchemaSetup } from "@/components/SchemaSetup";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
   Alert,
@@ -9,14 +10,24 @@ import {
   Panel,
   SelectField,
 } from "@/components/ui";
+import { checkDbHealth } from "@/lib/db-health";
 import type { Course, Enrollment, Student } from "@/lib/types";
 import { createClient } from "@/utils/supabase/server";
 
 export const instant = false;
 
 export default async function EnrollmentsPage() {
-  const supabase = await createClient();
+  const health = await checkDbHealth();
+  if (health.missingSchema) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Inscriptions" description="Installation requise." />
+        <SchemaSetup />
+      </div>
+    );
+  }
 
+  const supabase = await createClient();
   const [enrollmentsRes, studentsRes, coursesRes] = await Promise.all([
     supabase
       .from("enrollments")
@@ -27,6 +38,19 @@ export default async function EnrollmentsPage() {
     supabase.from("students").select("*").order("last_name"),
     supabase.from("courses").select("*").order("code"),
   ]);
+
+  if (enrollmentsRes.error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Inscriptions" description="Erreur." />
+        <Alert tone="error">
+          Impossible de charger les inscriptions. Vérifie l&apos;installation
+          Supabase.
+        </Alert>
+        <SchemaSetup compact />
+      </div>
+    );
+  }
 
   const enrollments = (enrollmentsRes.data ?? []) as Enrollment[];
   const students = (studentsRes.data ?? []) as Student[];
@@ -39,10 +63,6 @@ export default async function EnrollmentsPage() {
         title="Inscriptions"
         description="Associe un étudiant à un cours."
       />
-
-      {enrollmentsRes.error ? (
-        <Alert tone="error">{enrollmentsRes.error.message}</Alert>
-      ) : null}
 
       <Panel title="Nouvelle inscription">
         {!canEnroll ? (
@@ -82,9 +102,9 @@ export default async function EnrollmentsPage() {
         )}
       </Panel>
 
-      {enrollments.length === 0 && !enrollmentsRes.error ? (
+      {enrollments.length === 0 ? (
         <EmptyState message="Aucune inscription." />
-      ) : enrollments.length > 0 ? (
+      ) : (
         <DataTable headers={["Étudiant", "Cours"]}>
           {enrollments.map((e) => (
             <tr key={e.id} className="hover:bg-stone-50">
@@ -105,7 +125,7 @@ export default async function EnrollmentsPage() {
             </tr>
           ))}
         </DataTable>
-      ) : null}
+      )}
     </div>
   );
 }

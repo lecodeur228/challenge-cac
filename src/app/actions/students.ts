@@ -23,7 +23,15 @@ export async function createStudent(formData: FormData) {
   }
 
   const { error } = await supabase.from("students").insert(parsed.data);
-  if (error) return { error: "Échec de la création." };
+  if (error) {
+    if (/schema cache|does not exist|PGRST205/i.test(error.message)) {
+      return {
+        error:
+          "Tables absentes. Sur Accueil, copie le SQL et exécute-le dans Supabase.",
+      };
+    }
+    return { error: "Échec de la création (email déjà utilisé ?)." };
+  }
 
   revalidatePath("/dashboard/students");
   revalidatePath("/dashboard");

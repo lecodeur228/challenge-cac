@@ -1,5 +1,6 @@
 import { createStudent, deleteStudent } from "@/app/actions/students";
 import { ActionForm } from "@/components/FormMessage";
+import { SchemaSetup } from "@/components/SchemaSetup";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
   Alert,
@@ -9,19 +10,35 @@ import {
   PageHeader,
   Panel,
 } from "@/components/ui";
+import { loadTable } from "@/lib/db";
 import type { Student } from "@/lib/types";
-import { createClient } from "@/utils/supabase/server";
 
 export const instant = false;
 
 export default async function StudentsPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("students")
-    .select("*")
-    .order("last_name");
+  const result = await loadTable<Student>("students", (supabase) =>
+    supabase.from("students").select("*").order("last_name"),
+  );
 
-  const students = (data ?? []) as Student[];
+  if (!result.ok && result.missingSchema) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Étudiants" description="Installation requise." />
+        <SchemaSetup />
+      </div>
+    );
+  }
+
+  if (!result.ok) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Étudiants" description="Erreur de chargement." />
+        <Alert tone="error">{result.error}</Alert>
+      </div>
+    );
+  }
+
+  const students = result.rows;
 
   return (
     <div className="space-y-6">
@@ -29,8 +46,6 @@ export default async function StudentsPage() {
         title="Étudiants"
         description="Crée un étudiant avec son email et sa filière."
       />
-
-      {error ? <Alert tone="error">{error.message}</Alert> : null}
 
       <Panel title="Nouvel étudiant">
         <ActionForm
@@ -63,17 +78,19 @@ export default async function StudentsPage() {
             required
           />
           <div className="flex items-end">
-            <SubmitButton className="w-full sm:w-auto">Ajouter l&apos;étudiant</SubmitButton>
+            <SubmitButton className="w-full sm:w-auto">
+              Ajouter l&apos;étudiant
+            </SubmitButton>
           </div>
         </ActionForm>
       </Panel>
 
-      {students.length === 0 && !error ? (
+      {students.length === 0 ? (
         <EmptyState
           message="Aucun étudiant pour l’instant."
           hint="Utilise le formulaire ci-dessus pour en ajouter un."
         />
-      ) : students.length > 0 ? (
+      ) : (
         <DataTable headers={["Nom", "Email", "Filière", "Année"]}>
           {students.map((s) => (
             <tr key={s.id} className="hover:bg-stone-50">
@@ -92,7 +109,7 @@ export default async function StudentsPage() {
             </tr>
           ))}
         </DataTable>
-      ) : null}
+      )}
     </div>
   );
 }

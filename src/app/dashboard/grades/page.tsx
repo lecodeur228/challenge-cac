@@ -1,5 +1,6 @@
 import { createGrade, deleteGrade } from "@/app/actions/grades";
 import { ActionForm } from "@/components/FormMessage";
+import { SchemaSetup } from "@/components/SchemaSetup";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
   Alert,
@@ -10,14 +11,24 @@ import {
   Panel,
   SelectField,
 } from "@/components/ui";
+import { checkDbHealth } from "@/lib/db-health";
 import type { Enrollment, Grade } from "@/lib/types";
 import { createClient } from "@/utils/supabase/server";
 
 export const instant = false;
 
 export default async function GradesPage() {
-  const supabase = await createClient();
+  const health = await checkDbHealth();
+  if (health.missingSchema) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Notes" description="Installation requise." />
+        <SchemaSetup />
+      </div>
+    );
+  }
 
+  const supabase = await createClient();
   const [gradesRes, enrollmentsRes] = await Promise.all([
     supabase
       .from("grades")
@@ -31,6 +42,18 @@ export default async function GradesPage() {
       .order("created_at", { ascending: false }),
   ]);
 
+  if (gradesRes.error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Notes" description="Erreur." />
+        <Alert tone="error">
+          Impossible de charger les notes. Vérifie l&apos;installation Supabase.
+        </Alert>
+        <SchemaSetup compact />
+      </div>
+    );
+  }
+
   const grades = (gradesRes.data ?? []) as Grade[];
   const enrollments = (enrollmentsRes.data ?? []) as Enrollment[];
 
@@ -40,10 +63,6 @@ export default async function GradesPage() {
         title="Notes"
         description="Saisis une note sur 20 pour une inscription."
       />
-
-      {gradesRes.error ? (
-        <Alert tone="error">{gradesRes.error.message}</Alert>
-      ) : null}
 
       <Panel title="Nouvelle note">
         {enrollments.length === 0 ? (
@@ -92,9 +111,9 @@ export default async function GradesPage() {
         )}
       </Panel>
 
-      {grades.length === 0 && !gradesRes.error ? (
+      {grades.length === 0 ? (
         <EmptyState message="Aucune note." />
-      ) : grades.length > 0 ? (
+      ) : (
         <DataTable headers={["Étudiant", "Cours", "Libellé", "Note"]}>
           {grades.map((g) => (
             <tr key={g.id} className="hover:bg-stone-50">
@@ -117,7 +136,7 @@ export default async function GradesPage() {
             </tr>
           ))}
         </DataTable>
-      ) : null}
+      )}
     </div>
   );
 }
