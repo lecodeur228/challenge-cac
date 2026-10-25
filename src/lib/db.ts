@@ -13,8 +13,10 @@ export function isMissingTableError(message?: string | null) {
 
 /** Load rows only if schema exists; otherwise return missingSchema flag. */
 export async function loadTable<T>(
-  table: string,
-  query: (client: Awaited<ReturnType<typeof createClient>>) => Promise<{
+  _table: string,
+  query: (
+    client: Awaited<ReturnType<typeof createClient>>,
+  ) => PromiseLike<{
     data: T[] | null;
     error: { message: string } | null;
   }>,
