@@ -1,11 +1,15 @@
 import Link from "next/link";
-import { Alert, PageHeader } from "@/components/ui";
+import { SeedButton } from "@/components/SeedButton";
+import { Alert, PageHeader, Panel } from "@/components/ui";
 import { checkDbHealth } from "@/lib/db-health";
 
 export const instant = false;
 
 export default async function DashboardPage() {
   const health = await checkDbHealth();
+  const empty =
+    health.ok &&
+    Object.values(health.counts).every((c) => c === 0 || c === null);
 
   const stats = [
     { label: "Étudiants", href: "/dashboard/students", key: "students" },
@@ -27,19 +31,31 @@ export default async function DashboardPage() {
         {health.missingSchema ? (
           <>
             {" "}
-            Lien SQL Editor :{" "}
+            Exécute{" "}
+            <code className="rounded bg-black/5 px-1">supabase/setup-all.sql</code>{" "}
+            dans le{" "}
             <a
               className="font-semibold underline"
               href="https://supabase.com/dashboard/project/mfnvfqkmnqduxjbdomgy/sql/new"
               target="_blank"
               rel="noreferrer"
             >
-              ouvrir Supabase
-            </a>
-            .
+              SQL Editor Supabase
+            </a>{" "}
+            (schéma + seed en une fois).
           </>
         ) : null}
       </Alert>
+
+      {empty ? (
+        <Panel title="Données de démo (prod / local)">
+          <p className="mb-3 text-sm text-stone-600">
+            Base vide. Charge un jeu de test (4 étudiants, 4 cours, notes,
+            absences) pour le pentest et les démos.
+          </p>
+          <SeedButton />
+        </Panel>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => {

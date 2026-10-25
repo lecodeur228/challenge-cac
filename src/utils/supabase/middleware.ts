@@ -40,11 +40,20 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAuthPage = path === "/login" || path === "/signup";
   const isDashboard = path.startsWith("/dashboard");
-  const isPublic =
-    path === "/" ||
-    path === "/robots.txt" ||
-    path === "/security.txt" ||
-    path === "/.well-known/security.txt";
+  const isAuthCallback = path.startsWith("/auth/callback");
+
+  // Let the callback route exchange ?code= for a session
+  if (isAuthCallback) {
+    return supabaseResponse;
+  }
+
+  // Legacy confirm links land on /?code=... — send to callback
+  const code = request.nextUrl.searchParams.get("code");
+  if (path === "/" && code) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
 
   if (!user && isDashboard) {
     const url = request.nextUrl.clone();
@@ -57,10 +66,6 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
-  }
-
-  if (!user && path === "/" && !isPublic) {
-    // handled by page redirect
   }
 
   return supabaseResponse;

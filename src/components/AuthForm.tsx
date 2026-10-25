@@ -2,16 +2,19 @@
 
 import { useState, useTransition } from "react";
 
+type AuthResult = { error?: string; message?: string } | void;
+
 export function AuthForm({
   action,
   submitLabel,
   showInvite = false,
 }: {
-  action: (formData: FormData) => Promise<{ error?: string } | void>;
+  action: (formData: FormData) => Promise<AuthResult>;
   submitLabel: string;
   showInvite?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const inputClass =
@@ -22,9 +25,11 @@ export function AuthForm({
       className="mt-8 space-y-4"
       action={(formData) => {
         setError(null);
+        setMessage(null);
         startTransition(async () => {
           const result = await action(formData);
           if (result?.error) setError(result.error);
+          if (result?.message) setMessage(result.message);
         });
       }}
     >
@@ -76,6 +81,11 @@ export function AuthForm({
       {error ? (
         <p className="text-sm font-medium text-red-700" role="alert">
           {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p className="text-sm font-medium text-teal-800" role="status">
+          {message}
         </p>
       ) : null}
     </form>

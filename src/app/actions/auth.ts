@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authSchema } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/server";
@@ -13,6 +14,18 @@ function timingSafeEqual(a: string, b: string) {
     out |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
   return out === 0;
+}
+
+async function appOrigin() {
+  // Prefer fixed configured origin (avoids host-header tricks).
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  }
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  if (host) return `${proto}://${host}`;
+  return "http://localhost:3000";
 }
 
 export async function login(formData: FormData) {
@@ -29,6 +42,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
+    // Same message for all failures — no account-state enumeration.
     return { error: GENERIC_AUTH_ERROR };
   }
 
@@ -50,16 +64,29 @@ export async function signup(formData: FormData) {
 
   if (!parsed.success) {
     return {
-      error:
-        "Email ou mot de passe invalide (min. 8 caractères).",
+      error: "Email ou mot de passe invalide (min. 8 caractères).",
     };
   }
 
+  const origin = await appOrigin();
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp(parsed.data);
+  const { data, error } = await supabase.auth.signUp({
+    ...parsed.data,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
+  });
 
   if (error) {
     return { error: "Impossible de créer le compte." };
+  }
+
+  // Email confirmation enabled → no session yet
+  if (!data.session) {
+    return {
+      message:
+        "Compte créé. Ouvre ton email, clique le lien de confirmation, puis connecte-toi sur /login.",
+    };
   }
 
   redirect("/dashboard");
